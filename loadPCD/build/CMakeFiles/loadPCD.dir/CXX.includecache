@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/hanwenkai/桌面/pcl_code2/loadPCD/loadPCD.cpp
+iostream
+-
+string
+-
+pcl-1.7/pcl/point_types.h
+-
+pcl-1.7/pcl/io/pcd_io.h
+-
+pcl-1.7/pcl/visualization/pcl_visualizer.h
+-
+pcl-1.7/pcl/console/parse.h
+-
+
