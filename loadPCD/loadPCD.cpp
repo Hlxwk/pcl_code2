@@ -11,7 +11,7 @@ void printUsage(const char* command)
             << "-------------------------------------------\n"
             << "-h           this help\n"
             << "-s           Show pcd file\n"
-            << "-r           RGB colour visualisation example\n"
+            << "-p           cloud_c=cloud_a+cloud_b\n"
             << "-c           Custom colour visualisation example\n"
             << "-n           Normals visualisation example\n"
             << "-a           Shapes visualisation example\n"
@@ -45,7 +45,7 @@ int main(int argc,char** argv)
     if(pcl::console::find_argument(argc,argv,"-h")>=0)
     {
         printUsage(argv[0]);
-        return 0;
+        //return 0;
     }
     if(pcl::console::find_argument(argc,argv,"-s")>=0)
     {
@@ -54,6 +54,23 @@ int main(int argc,char** argv)
         std::cout<<"Original PointCloud has: "<<cloud->points.size()<<" points."<<std::endl;
         boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
         viewer=showpcd(cloud);
+        while(!viewer->wasStopped())
+        {
+            viewer->spinOnce();
+        }
+    }
+    if(pcl::console::find_argument(argc,argv,"-p")>=0)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_a(new pcl::PointCloud<pcl::PointXYZ>),
+                                            cloud_b(new pcl::PointCloud<pcl::PointXYZ>),
+                                            cloud_c(new pcl::PointCloud<pcl::PointXYZ>);
+        loadfile1(cloud_a,argv[2]);
+        loadfile1(cloud_b,argv[3]);
+        *cloud_c=*cloud_a;
+        *cloud_c+=*cloud_b;
+        std::cout<<"Plused PointCloud has: "<<cloud_c->points.size()<<" points."<<std::endl;
+        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+        viewer=showpcd(cloud_c);
         while(!viewer->wasStopped())
         {
             viewer->spinOnce();
