@@ -11,6 +11,8 @@ iostream
 -
 string
 -
+vector
+-
 pcl-1.7/pcl/point_types.h
 -
 pcl-1.7/pcl/io/pcd_io.h
@@ -18,5 +20,11 @@ pcl-1.7/pcl/io/pcd_io.h
 pcl-1.7/pcl/visualization/pcl_visualizer.h
 -
 pcl-1.7/pcl/console/parse.h
+-
+pcl-1.7/pcl/kdtree/kdtree_flann.h
+-
+pcl-1.7/pcl/octree/octree.h
+-
+pcl-1.7/pcl/point_cloud.h
 -
 
