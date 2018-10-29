@@ -13,6 +13,12 @@ string
 -
 vector
 -
+sstream
+-
+stdlib.h
+-
+time.h
+-
 pcl-1.7/pcl/point_types.h
 -
 pcl-1.7/pcl/io/pcd_io.h
@@ -26,5 +32,23 @@ pcl-1.7/pcl/kdtree/kdtree_flann.h
 pcl-1.7/pcl/octree/octree.h
 -
 pcl-1.7/pcl/point_cloud.h
+-
+pcl-1.7/pcl/ModelCoefficients.h
+-
+pcl-1.7/pcl/filters/extract_indices.h
+-
+pcl-1.7/pcl/filters/voxel_grid.h
+-
+pcl-1.7/pcl/features/normal_3d.h
+-
+pcl-1.7/pcl/kdtree/kdtree.h
+-
+pcl-1.7/pcl/sample_consensus/method_types.h
+-
+pcl-1.7/pcl/sample_consensus/model_types.h
+-
+pcl-1.7/pcl/segmentation/sac_segmentation.h
+-
+pcl-1.7/pcl/segmentation/extract_clusters.h
 -
 
