@@ -9,6 +9,8 @@
 /home/hanwenkai/桌面/pcl_code2/loadPCD/loadPCD.cpp
 iostream
 -
+algorithm
+-
 string
 -
 vector
@@ -50,5 +52,19 @@ pcl-1.7/pcl/sample_consensus/model_types.h
 pcl-1.7/pcl/segmentation/sac_segmentation.h
 -
 pcl-1.7/pcl/segmentation/extract_clusters.h
+-
+pcl-1.7/pcl/features/normal_3d.h
+-
+pcl-1.7/pcl/registration/ndt.h
+-
+pcl-1.7/pcl/filters/approximate_voxel_grid.h
+-
+boost/thread/thread.hpp
+-
+pcl-1.7/pcl/registration/icp.h
+-
+pcl-1.7/pcl/registration/gicp.h
+-
+pcl-1.7/pcl/registration/transformation_estimation_point_to_plane.h
 -
 

@@ -1,4 +1,5 @@
 #include<iostream>
+#include<algorithm>
 #include<string>
 #include<vector>
 #include<sstream>
@@ -8,6 +9,7 @@
 
 #include<pcl-1.7/pcl/point_types.h>
 #include<pcl-1.7/pcl/io/pcd_io.h>
+
 #include<pcl-1.7/pcl/visualization/pcl_visualizer.h>
 #include<pcl-1.7/pcl/console/parse.h>
 #include<pcl-1.7/pcl/kdtree/kdtree_flann.h>
@@ -24,6 +26,15 @@
 #include<pcl-1.7/pcl/segmentation/extract_clusters.h>
 
 
+#include<pcl-1.7/pcl/features/normal_3d.h>
+#include<pcl-1.7/pcl/registration/ndt.h>
+#include<pcl-1.7/pcl/filters/approximate_voxel_grid.h>
+#include<boost/thread/thread.hpp>
+#include<pcl-1.7/pcl/registration/icp.h>
+#include<pcl-1.7/pcl/registration/gicp.h>
+#include<pcl-1.7/pcl/registration/transformation_estimation_point_to_plane.h>
+
+
 struct color_value{
     int r;
     int g;
@@ -36,7 +47,9 @@ const color_value color[]={
     {0,0,255},
     {218,112,214},
     {255,0,255},
-    {255,255,0}
+    {255,255,0},
+    {160,82,45},
+    {8,46,84}
 };
 
 void printUsage(const char* command)
@@ -45,14 +58,16 @@ void printUsage(const char* command)
             << "Options:\n"
             << "-------------------------------------------\n"
             << "-h           this help\n"
-            << "-s           Show pcd file\n"
-            << "-s2          Show two pcd files\n"
-            << "-ss          Show several pcd files"
+            << "-s           Show several pcd files\n"
             << "-p           cloud_c=cloud_a+cloud_b\n"
             << "-kd          kd tree search\n"
             << "-de          spatial change detection on unorganized point cloud data\n"
             << "-c           Cluster Extraction\n"
-            << "-v           Viewports example\n"
+            << "-ndt         Registration using NDT\n"
+            <<" -icp1        Registration using icp(point-to-plane-1)\n"
+            <<" -gicp        Registration using icp(plane-to-plane)\n"
+            <<" -icp2        Registration using icp(point-to-plane-2)\n"
+            << "-t           Test for pointcloud\n"
             << "-i           Interaction Customization example\n"
             << "\n\n";
 }
@@ -69,6 +84,23 @@ void loadfile2(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,const char* filename)
     pcl::PCDReader reader;
     reader.read(filename,*cloud);
 }
+
+
+void add_normals(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals)
+{
+    pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr searchTree(new pcl::search::KdTree<pcl::PointXYZ>);
+    searchTree->setInputCloud(cloud);
+    pcl::NormalEstimation<pcl::PointXYZ,pcl::Normal> ne;
+    ne.setInputCloud(cloud);
+    ne.setSearchMethod(searchTree);
+    ne.setKSearch(15);
+    ne.compute(*normals);
+
+    pcl::concatenateFields(*cloud,*normals,*cloud_with_normals);
+}
+
+
 
 boost::shared_ptr<pcl::visualization::PCLVisualizer> showpcd (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud)
 {
@@ -110,37 +142,37 @@ int main(int argc,char** argv)
         //return 0;
     }
 
+    // if(pcl::console::find_argument(argc,argv,"-s")>=0)
+    // {
+    //     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+    //     loadfile2(cloud,argv[2]);
+    //     std::cout<<"Original PointCloud has: "<<cloud->points.size()<<" points."<<std::endl;
+    //     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+    //     viewer=showpcd(cloud);
+    //     while(!viewer->wasStopped())
+    //     {
+    //         viewer->spinOnce();
+    //     }
+    // }
+
+    // if(pcl::console::find_argument(argc,argv,"-s2")>=0)
+    // {
+    //     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1(new pcl::PointCloud<pcl::PointXYZ>),
+    //                                         cloud2(new pcl::PointCloud<pcl::PointXYZ>);
+    //     loadfile1(cloud1,argv[2]);
+    //     loadfile2(cloud2,argv[3]);
+    //     std::cout<<"cloud1 size= "<<cloud1->points.size()<<std::endl
+    //              <<"cloud2 size= "<<cloud2->points.size()<<std::endl;
+    //     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+    //     viewer=showpcd2(cloud1,cloud2);
+    //     while(!viewer->wasStopped())
+    //     {
+    //         viewer->spinOnce();
+    //     }
+
+    // }
+
     if(pcl::console::find_argument(argc,argv,"-s")>=0)
-    {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-        loadfile2(cloud,argv[2]);
-        std::cout<<"Original PointCloud has: "<<cloud->points.size()<<" points."<<std::endl;
-        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
-        viewer=showpcd(cloud);
-        while(!viewer->wasStopped())
-        {
-            viewer->spinOnce();
-        }
-    }
-
-    if(pcl::console::find_argument(argc,argv,"-s2")>=0)
-    {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1(new pcl::PointCloud<pcl::PointXYZ>),
-                                            cloud2(new pcl::PointCloud<pcl::PointXYZ>);
-        loadfile1(cloud1,argv[2]);
-        loadfile2(cloud2,argv[3]);
-        std::cout<<"cloud1 size= "<<cloud1->points.size()<<std::endl
-                 <<"cloud2 size= "<<cloud2->points.size()<<std::endl;
-        boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
-        viewer=showpcd2(cloud1,cloud2);
-        while(!viewer->wasStopped())
-        {
-            viewer->spinOnce();
-        }
-
-    }
-
-    if(pcl::console::find_argument(argc,argv,"-ss")>=0)
     {
         boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer);
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -265,12 +297,12 @@ int main(int argc,char** argv)
 
         pcl::VoxelGrid<pcl::PointXYZ> vg;
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ>);
-        vg.setInputCloud (cloud);
-        vg.setLeafSize (0.1f, 0.1f, 0.1f);//default 0.01
-        vg.filter (*cloud_filtered);
-        std::cout << "PointCloud after filtering has: " << cloud_filtered->points.size ()  << " data points." << std::endl; //*
+        // vg.setInputCloud (cloud);
+        // vg.setLeafSize (0.1f, 0.1f, 0.1f);//default 0.01
+        // vg.filter (*cloud_filtered);
+        // std::cout << "PointCloud after filtering has: " << cloud_filtered->points.size ()  << " data points." << std::endl; //*
         
-        
+        *cloud_filtered=*cloud;
         // Create the segmentation object for the planar model and set all the parameters
         
         pcl::SACSegmentation<pcl::PointXYZ> seg;
@@ -286,7 +318,7 @@ int main(int argc,char** argv)
         seg.setDistanceThreshold (0.06);//default 0.02
         
         int i=0, nr_points = (int) cloud_filtered->points.size ();
-        while (cloud_filtered->points.size () > 0.3 * nr_points)
+        while (cloud_filtered->points.size () > 0.3 * nr_points)//default 0.3
         {
             // Segment the largest planar component from the remaining cloud
             cloud_plane->clear();
@@ -331,8 +363,8 @@ int main(int argc,char** argv)
         
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-        ec.setClusterTolerance (0.4); // default 0.02
-        ec.setMinClusterSize (300);//default 100
+        ec.setClusterTolerance (0.3); // default 0.02
+        ec.setMinClusterSize (600);//default 300
         ec.setMaxClusterSize (25000);
         ec.setSearchMethod (tree);
         ec.setInputCloud (cloud_filtered);
@@ -356,6 +388,217 @@ int main(int argc,char** argv)
             writer.write<pcl::PointXYZ> (ss.str (), *cloud_cluster, false); //*
             j++;
         }
+    }
+
+
+
+
+
+    if(pcl::console::find_argument(argc,argv,"-ndt")>=0)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
+        loadfile1(target_cloud,argv[2]);
+        loadfile2(input_cloud,argv[3]);
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::ApproximateVoxelGrid<pcl::PointXYZ> approximate_voxel_filter;
+        approximate_voxel_filter.setLeafSize(0.2,0.2,0.2);
+        approximate_voxel_filter.setInputCloud(input_cloud);
+        approximate_voxel_filter.filter(*cloud_filtered);
+
+        pcl::NormalDistributionsTransform<pcl::PointXYZ,pcl::PointXYZ> ndt;
+        ndt.setTransformationEpsilon(0.1);
+        ndt.setStepSize(0.1);
+        ndt.setResolution(1.0);
+
+        ndt.setMaximumIterations(35);
+        ndt.setInputSource(cloud_filtered);
+        ndt.setInputTarget(target_cloud);
+
+        Eigen::Matrix4f init_guess;
+        // Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
+        // Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
+        // init_guess = (init_translation * init_rotation).matrix ();
+
+        init_guess<<0.753145,-0.657489,0.0219242,2.01461,
+                    0.657332,0.753457,0.014739,0.0717241,
+                    -0.0262097,0.00331083,0.999651,0.0253123,
+                    0,0,0,1;
+        // init_guess=Eigen::Matrix4f::Identity();
+
+
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+        ndt.align (*output_cloud, init_guess);
+        
+        pcl::transformPointCloud (*input_cloud, *output_cloud, ndt.getFinalTransformation ());
+
+        //std::cout<<ndt.getFinalTransformation()<<endl;
+        init_guess=ndt.getFinalTransformation();
+        cout<<init_guess<<endl;
+        
+        pcl::io::savePCDFileASCII ("room_scan2_transformed_ndt.pcd", *output_cloud);
+
+    }
+
+    if(pcl::console::find_argument(argc,argv,"-icp1")>=0)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZ>);
+
+        loadfile1(cloud1,argv[3]);
+        loadfile1(cloud2,argv[2]);
+        
+
+        pcl::PointCloud<pcl::PointNormal>::Ptr src(new pcl::PointCloud<pcl::PointNormal>);
+        pcl::copyPointCloud(*cloud1,*src);
+        pcl::PointCloud<pcl::PointNormal>::Ptr tgt(new pcl::PointCloud<pcl::PointNormal>);
+        pcl::copyPointCloud(*cloud2,*tgt);
+
+
+        pcl::NormalEstimation<pcl::PointNormal,pcl::PointNormal> norm_est;
+        norm_est.setSearchMethod(pcl::search::KdTree<pcl::PointNormal>::Ptr(new pcl::search::KdTree<pcl::PointNormal>));
+        norm_est.setKSearch(5);
+        norm_est.setInputCloud(tgt);
+        norm_est.compute(*tgt);
+
+        pcl::IterativeClosestPoint<pcl::PointNormal,pcl::PointNormal> icp;
+        typedef pcl::registration::TransformationEstimationPointToPlane<pcl::PointNormal,pcl::PointNormal> pointtoplane;
+
+        boost::shared_ptr<pointtoplane> point_to_plane(new pointtoplane);
+        icp.setTransformationEstimation(point_to_plane);
+
+        icp.setInputSource(src);
+        icp.setInputTarget(tgt);
+
+        icp.setRANSACIterations(20);
+        icp.setMaximumIterations(35);
+        icp.setTransformationEpsilon(1e-2);
+
+        Eigen::Matrix4f init_guess;
+        
+        pcl::PointCloud<pcl::PointNormal> output_cloud;
+        // init_guess<<0.753145,-0.657489,0.0219242,2.01461,
+        //             0.657332,0.753457,0.014739,0.0717241,
+        //             -0.0262097,0.00331083,0.999651,0.0253123,
+        //             0,0,0,1;
+        // Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
+        // Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
+        // init_guess = (init_translation * init_rotation).matrix ();
+        // init_guess=Eigen::Matrix4f::Identity();
+        Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
+        Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
+        init_guess = (init_translation * init_rotation).matrix ();
+        icp.align(output_cloud,init_guess);
+        cout<<init_guess<<endl;
+
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr output(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::transformPointCloud(*cloud1,*output,icp.getFinalTransformation());
+        //std::cout<<icp.getFinalTransformation()<<endl;
+        pcl::io::savePCDFileASCII ("room_scan2_transformed_icp.pcd", *output);
+    }
+
+
+
+    if(pcl::console::find_argument(argc,argv,"-gicp")>=0)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr src(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr tgt(new pcl::PointCloud<pcl::PointXYZ>);
+
+        loadfile1(tgt,argv[2]);
+        loadfile1(src,argv[3]);
+
+        pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
+        
+        icp.setTransformationEpsilon(0.0000000001);
+        icp.setMaxCorrespondenceDistance(2.0);
+        icp.setMaximumIterations(50);
+        icp.setRANSACIterations(20);
+        icp.setInputTarget(tgt);
+        icp.setInputSource(src);
+
+        Eigen::Matrix4f init_guess;
+        // Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
+        // Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
+        // init_guess = (init_translation * init_rotation).matrix ();
+        init_guess<<0.753145,-0.657489,0.0219242,2.01461,
+                    0.657332,0.753457,0.014739,0.0717241,
+                    -0.0262097,0.00331083,0.999651,0.0253123,
+                    0,0,0,1;
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr output(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZI> unused_result;
+        icp.align(*output, init_guess);
+
+        pcl::transformPointCloud(*src,*output,icp.getFinalTransformation());
+        cout<<icp.getFinalTransformation()<<endl;
+        //std::cout<<icp.getFinalTransformation()<<endl;
+        pcl::io::savePCDFileASCII ("room_scan2_transformed_gicp.pcd", *output);
+    }
+
+
+    if(pcl::console::find_argument(argc,argv,"-icp2")>=0)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr src(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr tgt(new pcl::PointCloud<pcl::PointXYZ>);
+
+        pcl::io::loadPCDFile(argv[2],*tgt);
+        pcl::io::loadPCDFile(argv[3],*src);
+        
+
+        pcl::PointCloud<pcl::PointNormal>::Ptr cloud_source_normals(new pcl::PointCloud<pcl::PointNormal>);
+        pcl::PointCloud<pcl::PointNormal>::Ptr cloud_target_normals(new pcl::PointCloud<pcl::PointNormal>);
+        pcl::PointCloud<pcl::PointNormal>::Ptr cloud_source_trans_normals(new pcl::PointCloud<pcl::PointNormal>);
+
+        add_normals(src,cloud_source_normals);
+        add_normals(tgt,cloud_target_normals);
+
+        pcl::IterativeClosestPointWithNormals<pcl::PointNormal,pcl::PointNormal>::Ptr icp(new pcl::IterativeClosestPointWithNormals<pcl::PointNormal,pcl::PointNormal>);
+
+        icp->setTransformationEpsilon(0.0000000001);
+        icp->setMaxCorrespondenceDistance(2.0);
+        icp->setMaximumIterations(50);
+        icp->setRANSACIterations(20);
+        icp->setInputSource(cloud_source_normals); //
+        icp->setInputTarget(cloud_target_normals);
+        
+        Eigen::Matrix4f init_guess;
+        Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
+        Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
+        init_guess = (init_translation * init_rotation).matrix ();
+
+        init_guess<<0.753145,-0.657489,0.0219242,2.01461,
+                    0.657332,0.753457,0.014739,0.0717241,
+                    -0.0262097,0.00331083,0.999651,0.0253123,
+                    0,0,0,1;
+
+        
+        icp->align(*cloud_source_trans_normals, init_guess);
+
+        pcl::transformPointCloud(*cloud_source_normals,*cloud_source_trans_normals,icp->getFinalTransformation());
+        cout<<icp->getFinalTransformation()<<endl;
+
+        pcl::io::savePCDFileASCII("room_scan2_transformed_icp2.pcd", *cloud_source_trans_normals);
+
+    }
+
+    if(pcl::console::find_argument(argc,argv,"-t")>=0)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        loadfile1(cloud,argv[2]);
+        
+        float max_z=0,min_z=999;
+        for(int i=0;i<cloud->points.size();++i)
+        {
+            max_z=std::max(max_z,cloud->points[i].z);
+            min_z=std::min(min_z,cloud->points[i].z);
+        }
+        std::cout<<"max_z= "<<max_z<<std::endl
+                 <<"min_z= "<<min_z<<std::endl;
+
     }
     return 0;
 }
