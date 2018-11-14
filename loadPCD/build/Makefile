@@ -111,6 +111,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named load
+
+# Build rule for target.
+load: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 load
+.PHONY : load
+
+# fast build rule for target.
+load/fast:
+	$(MAKE) -f CMakeFiles/load.dir/build.make CMakeFiles/load.dir/build
+.PHONY : load/fast
+
+#=============================================================================
 # Target rules for targets named loadPCD
 
 # Build rule for target.
@@ -123,32 +136,113 @@ loadPCD/fast:
 	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/build
 .PHONY : loadPCD/fast
 
-loadPCD.o: loadPCD.cpp.o
+apps/loadPCD.o: apps/loadPCD.cpp.o
 
-.PHONY : loadPCD.o
+.PHONY : apps/loadPCD.o
 
 # target to build an object file
-loadPCD.cpp.o:
-	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/loadPCD.cpp.o
-.PHONY : loadPCD.cpp.o
+apps/loadPCD.cpp.o:
+	$(MAKE) -f CMakeFiles/load.dir/build.make CMakeFiles/load.dir/apps/loadPCD.cpp.o
+.PHONY : apps/loadPCD.cpp.o
 
-loadPCD.i: loadPCD.cpp.i
+apps/loadPCD.i: apps/loadPCD.cpp.i
 
-.PHONY : loadPCD.i
+.PHONY : apps/loadPCD.i
 
 # target to preprocess a source file
-loadPCD.cpp.i:
-	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/loadPCD.cpp.i
-.PHONY : loadPCD.cpp.i
+apps/loadPCD.cpp.i:
+	$(MAKE) -f CMakeFiles/load.dir/build.make CMakeFiles/load.dir/apps/loadPCD.cpp.i
+.PHONY : apps/loadPCD.cpp.i
 
-loadPCD.s: loadPCD.cpp.s
+apps/loadPCD.s: apps/loadPCD.cpp.s
 
-.PHONY : loadPCD.s
+.PHONY : apps/loadPCD.s
 
 # target to generate assembly for a file
-loadPCD.cpp.s:
-	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/loadPCD.cpp.s
-.PHONY : loadPCD.cpp.s
+apps/loadPCD.cpp.s:
+	$(MAKE) -f CMakeFiles/load.dir/build.make CMakeFiles/load.dir/apps/loadPCD.cpp.s
+.PHONY : apps/loadPCD.cpp.s
+
+src/gicp_omp.o: src/gicp_omp.cpp.o
+
+.PHONY : src/gicp_omp.o
+
+# target to build an object file
+src/gicp_omp.cpp.o:
+	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/src/gicp_omp.cpp.o
+.PHONY : src/gicp_omp.cpp.o
+
+src/gicp_omp.i: src/gicp_omp.cpp.i
+
+.PHONY : src/gicp_omp.i
+
+# target to preprocess a source file
+src/gicp_omp.cpp.i:
+	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/src/gicp_omp.cpp.i
+.PHONY : src/gicp_omp.cpp.i
+
+src/gicp_omp.s: src/gicp_omp.cpp.s
+
+.PHONY : src/gicp_omp.s
+
+# target to generate assembly for a file
+src/gicp_omp.cpp.s:
+	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/src/gicp_omp.cpp.s
+.PHONY : src/gicp_omp.cpp.s
+
+src/ndt_omp.o: src/ndt_omp.cpp.o
+
+.PHONY : src/ndt_omp.o
+
+# target to build an object file
+src/ndt_omp.cpp.o:
+	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/src/ndt_omp.cpp.o
+.PHONY : src/ndt_omp.cpp.o
+
+src/ndt_omp.i: src/ndt_omp.cpp.i
+
+.PHONY : src/ndt_omp.i
+
+# target to preprocess a source file
+src/ndt_omp.cpp.i:
+	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/src/ndt_omp.cpp.i
+.PHONY : src/ndt_omp.cpp.i
+
+src/ndt_omp.s: src/ndt_omp.cpp.s
+
+.PHONY : src/ndt_omp.s
+
+# target to generate assembly for a file
+src/ndt_omp.cpp.s:
+	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/src/ndt_omp.cpp.s
+.PHONY : src/ndt_omp.cpp.s
+
+src/voxel_grid_covariance_omp.o: src/voxel_grid_covariance_omp.cpp.o
+
+.PHONY : src/voxel_grid_covariance_omp.o
+
+# target to build an object file
+src/voxel_grid_covariance_omp.cpp.o:
+	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/src/voxel_grid_covariance_omp.cpp.o
+.PHONY : src/voxel_grid_covariance_omp.cpp.o
+
+src/voxel_grid_covariance_omp.i: src/voxel_grid_covariance_omp.cpp.i
+
+.PHONY : src/voxel_grid_covariance_omp.i
+
+# target to preprocess a source file
+src/voxel_grid_covariance_omp.cpp.i:
+	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/src/voxel_grid_covariance_omp.cpp.i
+.PHONY : src/voxel_grid_covariance_omp.cpp.i
+
+src/voxel_grid_covariance_omp.s: src/voxel_grid_covariance_omp.cpp.s
+
+.PHONY : src/voxel_grid_covariance_omp.s
+
+# target to generate assembly for a file
+src/voxel_grid_covariance_omp.cpp.s:
+	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/src/voxel_grid_covariance_omp.cpp.s
+.PHONY : src/voxel_grid_covariance_omp.cpp.s
 
 # Help Target
 help:
@@ -158,10 +252,20 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... load"
 	@echo "... loadPCD"
-	@echo "... loadPCD.o"
-	@echo "... loadPCD.i"
-	@echo "... loadPCD.s"
+	@echo "... apps/loadPCD.o"
+	@echo "... apps/loadPCD.i"
+	@echo "... apps/loadPCD.s"
+	@echo "... src/gicp_omp.o"
+	@echo "... src/gicp_omp.i"
+	@echo "... src/gicp_omp.s"
+	@echo "... src/ndt_omp.o"
+	@echo "... src/ndt_omp.i"
+	@echo "... src/ndt_omp.s"
+	@echo "... src/voxel_grid_covariance_omp.o"
+	@echo "... src/voxel_grid_covariance_omp.i"
+	@echo "... src/voxel_grid_covariance_omp.s"
 .PHONY : help
 
 

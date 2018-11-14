@@ -4,7 +4,9 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/hanwenkai/桌面/pcl_code2/loadPCD/loadPCD.cpp" "/home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles/loadPCD.dir/loadPCD.cpp.o"
+  "/home/hanwenkai/桌面/pcl_code2/loadPCD/src/gicp_omp.cpp" "/home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles/loadPCD.dir/src/gicp_omp.cpp.o"
+  "/home/hanwenkai/桌面/pcl_code2/loadPCD/src/ndt_omp.cpp" "/home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles/loadPCD.dir/src/ndt_omp.cpp.o"
+  "/home/hanwenkai/桌面/pcl_code2/loadPCD/src/voxel_grid_covariance_omp.cpp" "/home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles/loadPCD.dir/src/voxel_grid_covariance_omp.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -15,10 +17,6 @@ set(CMAKE_TARGET_DEFINITIONS_CXX
   "EIGEN_USE_NEW_STDVECTOR"
   "EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET"
   "FLANN_STATIC"
-  "QT_CORE_LIB"
-  "QT_GUI_LIB"
-  "QT_NO_DEBUG"
-  "QT_WIDGETS_LIB"
   "qh_QHpointer"
   "vtkFiltersFlowPaths_AUTOINIT=1(vtkFiltersParallelFlowPaths)"
   "vtkIOExodus_AUTOINIT=1(vtkIOParallelExodus)"
@@ -51,11 +49,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/usr/include/eigen3"
   "/usr/include/ni"
   "/usr/include/openni2"
-  "/usr/include/x86_64-linux-gnu/qt5"
-  "/usr/include/x86_64-linux-gnu/qt5/QtWidgets"
-  "/usr/include/x86_64-linux-gnu/qt5/QtGui"
-  "/usr/include/x86_64-linux-gnu/qt5/QtCore"
-  "/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64"
+  "../include"
   )
 
 # Targets to which this target links.

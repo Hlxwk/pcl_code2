@@ -5,6 +5,7 @@
 #include<sstream>
 #include<stdlib.h>
 #include<time.h>
+#include<ctime>
 
 
 #include<pcl-1.7/pcl/point_types.h>
@@ -35,6 +36,10 @@
 #include<pcl-1.7/pcl/registration/transformation_estimation_point_to_plane.h>
 
 
+#include<pclomp/ndt_omp.h>
+
+
+
 struct color_value{
     int r;
     int g;
@@ -63,10 +68,11 @@ void printUsage(const char* command)
             << "-kd          kd tree search\n"
             << "-de          spatial change detection on unorganized point cloud data\n"
             << "-c           Cluster Extraction\n"
-            << "-ndt         Registration using NDT\n"
+            << "-ndt         Registration using NDT(one thread)\n"
             <<" -icp1        Registration using icp(point-to-plane-1)\n"
             <<" -gicp        Registration using icp(plane-to-plane)\n"
             <<" -icp2        Registration using icp(point-to-plane-2)\n"
+            <<" -ndt_omp     Registration using NDT(multiple threads)\n"
             << "-t           Test for pointcloud\n"
             << "-i           Interaction Customization example\n"
             << "\n\n";
@@ -127,6 +133,29 @@ boost::shared_ptr<pcl::visualization::PCLVisualizer> showpcd2 (pcl::PointCloud<p
     viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE,1,"cloud2");
     viewer->initCameraParameters();
     return viewer;
+}
+
+
+
+// align point clouds and measure processing time
+pcl::PointCloud<pcl::PointXYZ>::Ptr align(pcl::Registration<pcl::PointXYZ, pcl::PointXYZ>::Ptr registration, const pcl::PointCloud<pcl::PointXYZ>::Ptr& target_cloud, const pcl::PointCloud<pcl::PointXYZ>::Ptr& source_cloud ) {
+  registration->setInputTarget(target_cloud);
+  registration->setInputSource(source_cloud);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr aligned(new pcl::PointCloud<pcl::PointXYZ>());
+
+  clock_t starttime,endtime1,endtime2;
+  starttime=clock();
+  registration->align(*aligned);
+  endtime1=clock();
+  std::cout << "single : " << (double)(endtime1-starttime)/CLOCKS_PER_SEC<<"s"<< std::endl;
+
+  for(int i=0; i<10; i++) {
+    registration->align(*aligned);
+  }
+  std::cout << "multiple : " << (double)(endtime1-endtime2)/CLOCKS_PER_SEC<<"s"<< std::endl;
+
+
+  return aligned;
 }
 
 
@@ -584,6 +613,60 @@ int main(int argc,char** argv)
         pcl::io::savePCDFileASCII("room_scan2_transformed_icp2.pcd", *cloud_source_trans_normals);
 
     }
+
+
+    if(pcl::console::find_argument(argc,argv,"-ndt_omp")>=0)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+        pcl::PointCloud<pcl::PointXYZ>::Ptr source_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+
+
+        loadfile1(target_cloud,argv[2]);
+        loadfile1(source_cloud,argv[3]);
+        
+        pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled(new pcl::PointCloud<pcl::PointXYZ>());
+        
+        pcl::VoxelGrid<pcl::PointXYZ> voxelgrid;
+        voxelgrid.setLeafSize(0.1f, 0.1f, 0.1f);
+        
+        
+        voxelgrid.setInputCloud(target_cloud);
+        voxelgrid.filter(*downsampled);
+        *target_cloud = *downsampled;
+        
+        voxelgrid.setInputCloud(source_cloud);
+        voxelgrid.filter(*downsampled);
+        source_cloud = downsampled;
+        
+        
+        std::cout << "--- pcl::NDT ---" << std::endl;
+        pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>::Ptr ndt(new pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>());
+        ndt->setResolution(1.0);
+        
+        pcl::PointCloud<pcl::PointXYZ>::Ptr aligned = align(ndt, target_cloud, source_cloud);
+        
+        std::vector<int> num_threads = {1, omp_get_max_threads()};
+        std::vector<std::pair<std::string, pclomp::NeighborSearchMethod>> search_methods = {
+            {"KDTREE", pclomp::KDTREE},
+            {"DIRECT7", pclomp::DIRECT7},
+            {"DIRECT1", pclomp::DIRECT1}
+        };
+        
+        pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>::Ptr ndt_omp(new pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>());
+        ndt_omp->setResolution(1.0);
+        for(int n : num_threads) {
+            for(const auto& search_method : search_methods) {
+                std::cout << "--- pclomp::NDT (" << search_method.first << ", " << n << " threads) ---" << std::endl;
+                ndt_omp->setNumThreads(n);
+                ndt_omp->setNeighborhoodSearchMethod(search_method.second);
+                aligned = align(ndt_omp, target_cloud, source_cloud);
+                }
+        }
+    }
+
+
+
+
 
     if(pcl::console::find_argument(argc,argv,"-t")>=0)
     {

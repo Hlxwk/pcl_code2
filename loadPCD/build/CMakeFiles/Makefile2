@@ -60,13 +60,50 @@ CMAKE_SOURCE_DIR = /home/hanwenkai/桌面/pcl_code2/loadPCD
 CMAKE_BINARY_DIR = /home/hanwenkai/桌面/pcl_code2/loadPCD/build
 
 #=============================================================================
+# Target rules for target CMakeFiles/load.dir
+
+# All Build rule for target.
+CMakeFiles/load.dir/all: CMakeFiles/loadPCD.dir/all
+	$(MAKE) -f CMakeFiles/load.dir/build.make CMakeFiles/load.dir/depend
+	$(MAKE) -f CMakeFiles/load.dir/build.make CMakeFiles/load.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles --progress-num=1,2 "Built target load"
+.PHONY : CMakeFiles/load.dir/all
+
+# Include target in all.
+all: CMakeFiles/load.dir/all
+
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/load.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles 6
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/load.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles 0
+.PHONY : CMakeFiles/load.dir/rule
+
+# Convenience name for target.
+load: CMakeFiles/load.dir/rule
+
+.PHONY : load
+
+# clean rule for target.
+CMakeFiles/load.dir/clean:
+	$(MAKE) -f CMakeFiles/load.dir/build.make CMakeFiles/load.dir/clean
+.PHONY : CMakeFiles/load.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/load.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
 # Target rules for target CMakeFiles/loadPCD.dir
 
 # All Build rule for target.
 CMakeFiles/loadPCD.dir/all:
 	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/depend
 	$(MAKE) -f CMakeFiles/loadPCD.dir/build.make CMakeFiles/loadPCD.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles --progress-num=1,2 "Built target loadPCD"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles --progress-num=3,4,5,6 "Built target loadPCD"
 .PHONY : CMakeFiles/loadPCD.dir/all
 
 # Include target in all.
@@ -76,7 +113,7 @@ all: CMakeFiles/loadPCD.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/loadPCD.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles 4
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/loadPCD.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles 0
 .PHONY : CMakeFiles/loadPCD.dir/rule

@@ -1,3 +1,4 @@
 /home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles/edit_cache.dir
 /home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles/rebuild_cache.dir
+/home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles/load.dir
 /home/hanwenkai/桌面/pcl_code2/loadPCD/build/CMakeFiles/loadPCD.dir
