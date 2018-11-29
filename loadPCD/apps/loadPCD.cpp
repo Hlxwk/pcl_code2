@@ -38,6 +38,9 @@
 
 #include<pclomp/ndt_omp.h>
 
+#include <fstream>
+#include<liblas/liblas.hpp>
+
 
 
 struct color_value{
@@ -74,6 +77,7 @@ void printUsage(const char* command)
             << "-icp2        Registration using icp(point-to-plane-2)\n"
             << "-ndt_omp_t   Registration using NDT(test multiple threads and search methods)\n"
             << "-ndt_omp     Registration using NDT(multiple threads and different seach methods)\n"
+            << "-las         las to pcd\n"
             << "-t           Test for pointcloud\n"
             << "-i           Interaction Customization example\n"
             << "\n\n";
@@ -548,7 +552,7 @@ int main(int argc,char** argv)
 
         pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
         
-        icp.setTransformationEpsilon(0.0000000001);
+        icp.setTransformationEpsilon(0.0000000001);//default 0.0000000001
         icp.setMaxCorrespondenceDistance(2.0);
         icp.setMaximumIterations(50);
         icp.setRANSACIterations(20);
@@ -556,19 +560,26 @@ int main(int argc,char** argv)
         icp.setInputSource(src);
 
         Eigen::Matrix4f init_guess;
-        // Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
-        // Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
-        // init_guess = (init_translation * init_rotation).matrix ();
-        init_guess<<0.753145,-0.657489,0.0219242,2.01461,
-                    0.657332,0.753457,0.014739,0.0717241,
-                    -0.0262097,0.00331083,0.999651,0.0253123,
-                    0,0,0,1;
+        Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
+        Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
+        init_guess = (init_translation * init_rotation).matrix ();
+        // init_guess<<0.753145,-0.657489,0.0219242,2.01461,
+        //             0.657332,0.753457,0.014739,0.0717241,
+        //             -0.0262097,0.00331083,0.999651,0.0253123,
+        //             0,0,0,1;
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr output(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZI> unused_result;
+
+        clock_t starttime,endtime;
+        starttime=clock();
         icp.align(*output, init_guess);
+        endtime=clock();
+
 
         pcl::transformPointCloud(*src,*output,icp.getFinalTransformation());
+
+        std::cerr<<"Registration time = "<<(double)(endtime-starttime)/CLOCKS_PER_SEC<<"s"<<std::endl;
         cout<<icp.getFinalTransformation()<<endl;
         //std::cout<<icp.getFinalTransformation()<<endl;
         pcl::io::savePCDFileASCII ("room_scan2_transformed_gicp.pcd", *output);
@@ -593,7 +604,7 @@ int main(int argc,char** argv)
 
         pcl::IterativeClosestPointWithNormals<pcl::PointNormal,pcl::PointNormal>::Ptr icp(new pcl::IterativeClosestPointWithNormals<pcl::PointNormal,pcl::PointNormal>);
 
-        icp->setTransformationEpsilon(0.0000000001);
+        icp->setTransformationEpsilon(0.0000000001);//default 0.0000000001
         icp->setMaxCorrespondenceDistance(2.0);
         icp->setMaximumIterations(50);
         icp->setRANSACIterations(20);
@@ -605,15 +616,19 @@ int main(int argc,char** argv)
         Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
         init_guess = (init_translation * init_rotation).matrix ();
 
-        init_guess<<0.753145,-0.657489,0.0219242,2.01461,
-                    0.657332,0.753457,0.014739,0.0717241,
-                    -0.0262097,0.00331083,0.999651,0.0253123,
-                    0,0,0,1;
+        // init_guess<<0.753145,-0.657489,0.0219242,2.01461,
+        //             0.657332,0.753457,0.014739,0.0717241,
+        //             -0.0262097,0.00331083,0.999651,0.0253123,
+        //             0,0,0,1;
 
-        
+        clock_t starttime,endtime;
+        starttime=clock();
         icp->align(*cloud_source_trans_normals, init_guess);
+        endtime=clock();
 
         pcl::transformPointCloud(*cloud_source_normals,*cloud_source_trans_normals,icp->getFinalTransformation());
+
+        std::cerr<<"Registration time = "<<(double)(endtime-starttime)/CLOCKS_PER_SEC<<"s"<<std::endl;
         cout<<icp->getFinalTransformation()<<endl;
 
         pcl::io::savePCDFileASCII("room_scan2_transformed_icp2.pcd", *cloud_source_trans_normals);
@@ -708,7 +723,7 @@ int main(int argc,char** argv)
 
         ndt_omp.setNumThreads(omp_get_max_threads());
         ndt_omp.setResolution(1.0);
-        ndt_omp.setNeighborhoodSearchMethod(pclomp::NeighborSearchMethod::DIRECT7);
+        ndt_omp.setNeighborhoodSearchMethod(pclomp::NeighborSearchMethod::KDTREE);
         ndt_omp.setTransformationEpsilon(0.01);
         ndt_omp.setStepSize(0.1);
         ndt_omp.setMaximumIterations(35);
@@ -741,21 +756,59 @@ int main(int argc,char** argv)
 
 
 
+    if(pcl::console::find_argument(argc,argv,"-las")>=0)
+    {
+        std::ifstream ifs;
+        ifs.open(argv[2],std::ios::in|std::ios::binary);
 
+        std::string s=argv[2],output_dir;
+        int start=s.find_last_of('/');
+        int end=s.find('.');
+        //cout<<start<<" "<<end<<endl;
+        output_dir=s.substr(start+1,end-start-1);
+        std::stringstream ss;
+        ss<<output_dir<<".pcd";
+        cout<<ss.str()<<endl;
+
+        liblas::ReaderFactory readerFactory;
+        liblas::Reader reader=readerFactory.CreateWithStream(ifs);
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_output(new pcl::PointCloud<pcl::PointXYZ>);
+
+        while(reader.ReadNextPoint())
+        {
+            double x=reader.GetPoint().GetX();
+            double y=reader.GetPoint().GetY();
+            double z=reader.GetPoint().GetZ();
+            pcl::PointXYZ p(x,y,z);
+            cloud_output->push_back(p);
+        }
+
+        cloud_output->width=cloud_output->points.size();
+        cloud_output->height=1;
+        cloud_output->is_dense=false;
+        pcl::io::savePCDFileASCII(ss.str(),*cloud_output);
+
+    }
 
     if(pcl::console::find_argument(argc,argv,"-t")>=0)
     {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-        loadfile1(cloud,argv[2]);
-        
-        float max_z=0,min_z=999;
-        for(int i=0;i<cloud->points.size();++i)
-        {
-            max_z=std::max(max_z,cloud->points[i].z);
-            min_z=std::min(min_z,cloud->points[i].z);
-        }
-        std::cout<<"max_z= "<<max_z<<std::endl
-                 <<"min_z= "<<min_z<<std::endl;
+        pcl::PointCloud<pcl::PointXYZ>::Ptr src(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr tgt(new pcl::PointCloud<pcl::PointXYZ>);
+
+        loadfile1(tgt,argv[2]);
+        loadfile2(src,argv[3]);
+
+        Eigen::Matrix4f init_guess;
+        Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
+        Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
+        init_guess = (init_translation * init_rotation).matrix ();
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr output(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::transformPointCloud(*src,*output,init_guess);
+
+
+        pcl::io::savePCDFileASCII("init_guess.pcd",*output);
 
     }
     return 0;

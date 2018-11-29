@@ -93,6 +93,10 @@ pcl-1.7/pcl/registration/transformation_estimation_point_to_plane.h
 -
 pclomp/ndt_omp.h
 -
+fstream
+-
+liblas/liblas.hpp
+-
 
 /usr/include/eigen3/Eigen/Cholesky
 Core

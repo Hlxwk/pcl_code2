@@ -41,4 +41,4 @@ add_dependencies(load
   loadPCD
 )
 
-target_link_libraries (load ${PCL_LIBRARIES} loadPCD)
+target_link_libraries (load ${PCL_LIBRARIES} ${LIBS} -llas loadPCD)
