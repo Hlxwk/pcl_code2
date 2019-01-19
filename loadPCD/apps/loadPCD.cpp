@@ -6,7 +6,7 @@
 #include<stdlib.h>
 #include<time.h>
 #include<ctime>
-
+#include<set>
 
 #include<pcl-1.7/pcl/point_types.h>
 #include<pcl-1.7/pcl/io/pcd_io.h>
@@ -77,9 +77,9 @@ void printUsage(const char* command)
             << "-icp2        Registration using icp(point-to-plane-2)\n"
             << "-ndt_omp_t   Registration using NDT(test multiple threads and search methods)\n"
             << "-ndt_omp     Registration using NDT(multiple threads and different seach methods)\n"
-            << "-las         las to pcd\n"
+            << "-las         Las to pcd\n"
+            << " -i          Intensity\n"
             << "-t           Test for pointcloud\n"
-            << "-i           Interaction Customization example\n"
             << "\n\n";
 }
 
@@ -325,13 +325,13 @@ int main(int argc,char** argv)
 
     if(pcl::console::find_argument(argc,argv,"-c")>=0)
     {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>),
-                                            cloud_f(new pcl::PointCloud<pcl::PointXYZ>);
-        loadfile1(cloud,argv[2]);
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>),
+                                            cloud_f(new pcl::PointCloud<pcl::PointXYZI>);
+        pcl::io::loadPCDFile(argv[2],*cloud);
         std::cout << "PointCloud before filtering has: " << cloud->points.size () << " data points." << std::endl; 
 
-        pcl::VoxelGrid<pcl::PointXYZ> vg;
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::VoxelGrid<pcl::PointXYZI> vg;
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZI>);
         // vg.setInputCloud (cloud);
         // vg.setLeafSize (0.1f, 0.1f, 0.1f);//default 0.01
         // vg.filter (*cloud_filtered);
@@ -340,11 +340,11 @@ int main(int argc,char** argv)
         *cloud_filtered=*cloud;
         // Create the segmentation object for the planar model and set all the parameters
         
-        pcl::SACSegmentation<pcl::PointXYZ> seg;
+        pcl::SACSegmentation<pcl::PointXYZI> seg;
         pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
         pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZ> ());
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane_sum(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_plane (new pcl::PointCloud<pcl::PointXYZI> ());
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_plane_sum(new pcl::PointCloud<pcl::PointXYZI>);
         pcl::PCDWriter writer;
         seg.setOptimizeCoefficients (true);
         seg.setModelType (pcl::SACMODEL_PLANE);
@@ -366,7 +366,7 @@ int main(int argc,char** argv)
             }
             
             // Extract the planar inliers from the input cloud
-            pcl::ExtractIndices<pcl::PointXYZ> extract;
+            pcl::ExtractIndices<pcl::PointXYZI> extract;
             extract.setInputCloud (cloud_filtered);
             extract.setIndices (inliers);
             extract.setNegative (false);
@@ -393,11 +393,11 @@ int main(int argc,char** argv)
 
 
 
-        pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+        pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
         tree->setInputCloud (cloud_filtered);
         
         std::vector<pcl::PointIndices> cluster_indices;
-        pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+        pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
         ec.setClusterTolerance (0.3); // default 0.02
         ec.setMinClusterSize (600);//default 300
         ec.setMaxClusterSize (25000);
@@ -410,7 +410,7 @@ int main(int argc,char** argv)
         for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
         {
             
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
             for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
             cloud_cluster->points.push_back (cloud_filtered->points[*pit]); //*
             cloud_cluster->width = cloud_cluster->points.size ();
@@ -420,7 +420,8 @@ int main(int argc,char** argv)
             std::cout << "PointCloud representing the Cluster: " << cloud_cluster->points.size () << " data points." << std::endl;
             std::stringstream ss;
             ss << "cloud_cluster_" << j << ".pcd";
-            writer.write<pcl::PointXYZ> (ss.str (), *cloud_cluster, false); //*
+            //writer.write<pcl::PointXYZI> (ss.str (), *cloud_cluster, false); 
+            pcl::io::savePCDFileASCII(ss.str(),*cloud_cluster);
             j++;
         }
     }
@@ -457,10 +458,17 @@ int main(int argc,char** argv)
         Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
         init_guess = (init_translation * init_rotation).matrix ();
 
+        init_guess = Eigen::Matrix4f::Identity();
+
         // init_guess<<0.753145,-0.657489,0.0219242,2.01461,
         //             0.657332,0.753457,0.014739,0.0717241,
         //             -0.0262097,0.00331083,0.999651,0.0253123,
         //             0,0,0,1;
+        init_guess<<0.627894,-0.750407,-0.206491 ,-10.0237,
+                    0.741192 ,0.495585 ,0.452803 ,-7.56973,
+                    -0.237452,-0.437362  ,0.86737 ,-6.17818,
+                    0        ,0        ,0        ,1;
+
 
 
         clock_t starttime,endtime;
@@ -479,6 +487,7 @@ int main(int argc,char** argv)
         std::cout<<ndt.getFinalTransformation()<<endl;
         
         pcl::io::savePCDFileASCII ("room_scan2_transformed_ndt.pcd", *output_cloud);
+        pcl::io::savePCDFileASCII ("plus.pcd",*output_cloud+*target_cloud);
 
     }
 
@@ -544,25 +553,38 @@ int main(int argc,char** argv)
 
     if(pcl::console::find_argument(argc,argv,"-gicp")>=0)
     {
+        using namespace std;
         pcl::PointCloud<pcl::PointXYZ>::Ptr src(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr tgt(new pcl::PointCloud<pcl::PointXYZ>);
 
         loadfile1(tgt,argv[2]);
         loadfile1(src,argv[3]);
 
-        pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
+
+        string s=argv[3];
+        int start=s.find_last_of('/');
+        int end=s.find_last_of('.');
+        string file=s.substr(start+1,end-start-1);
+        std::stringstream filename;
+        filename<<file<<"_transformed_gicp.pcd";
+
+        pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> gicp;
         
-        icp.setTransformationEpsilon(0.0000000001);//default 0.0000000001
-        icp.setMaxCorrespondenceDistance(2.0);
-        icp.setMaximumIterations(50);
-        icp.setRANSACIterations(20);
-        icp.setInputTarget(tgt);
-        icp.setInputSource(src);
+        gicp.setRotationEpsilon(1e-9);
+        gicp.setTransformationEpsilon(1e-9);
+        gicp.setMaxCorrespondenceDistance(2);
+        gicp.setMaximumOptimizerIterations(50);
+        gicp.setEuclideanFitnessEpsilon(0.5);
+
+        gicp.setInputTarget(tgt);
+        gicp.setInputSource(src);
+
 
         Eigen::Matrix4f init_guess;
         Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
         Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
         init_guess = (init_translation * init_rotation).matrix ();
+        init_guess = Eigen::Matrix4f::Identity();
         // init_guess<<0.753145,-0.657489,0.0219242,2.01461,
         //             0.657332,0.753457,0.014739,0.0717241,
         //             -0.0262097,0.00331083,0.999651,0.0253123,
@@ -573,16 +595,16 @@ int main(int argc,char** argv)
 
         clock_t starttime,endtime;
         starttime=clock();
-        icp.align(*output, init_guess);
+        gicp.align(*output, init_guess);
         endtime=clock();
 
 
-        pcl::transformPointCloud(*src,*output,icp.getFinalTransformation());
+        pcl::transformPointCloud(*src,*output,gicp.getFinalTransformation());
 
         std::cerr<<"Registration time = "<<(double)(endtime-starttime)/CLOCKS_PER_SEC<<"s"<<std::endl;
-        cout<<icp.getFinalTransformation()<<endl;
+        cout<<gicp.getFinalTransformation()<<endl;
         //std::cout<<icp.getFinalTransformation()<<endl;
-        pcl::io::savePCDFileASCII ("room_scan2_transformed_gicp.pcd", *output);
+        pcl::io::savePCDFileASCII (filename.str(), *output);
     }
 
 
@@ -593,6 +615,13 @@ int main(int argc,char** argv)
 
         pcl::io::loadPCDFile(argv[2],*tgt);
         pcl::io::loadPCDFile(argv[3],*src);
+
+        std::string s=argv[3];
+        int start=s.find_last_of('/');
+        int end=s.find_last_of('.');
+        std::string file=s.substr(start+1,end-start-1);
+        std::stringstream filename;
+        filename<<file<<"_transformed_icp2.pcd";
         
 
         pcl::PointCloud<pcl::PointNormal>::Ptr cloud_source_normals(new pcl::PointCloud<pcl::PointNormal>);
@@ -615,6 +644,7 @@ int main(int argc,char** argv)
         Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
         Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
         init_guess = (init_translation * init_rotation).matrix ();
+        init_guess = Eigen::Matrix4f::Identity();
 
         // init_guess<<0.753145,-0.657489,0.0219242,2.01461,
         //             0.657332,0.753457,0.014739,0.0717241,
@@ -631,7 +661,7 @@ int main(int argc,char** argv)
         std::cerr<<"Registration time = "<<(double)(endtime-starttime)/CLOCKS_PER_SEC<<"s"<<std::endl;
         cout<<icp->getFinalTransformation()<<endl;
 
-        pcl::io::savePCDFileASCII("room_scan2_transformed_icp2.pcd", *cloud_source_trans_normals);
+        pcl::io::savePCDFileASCII(filename.str(), *cloud_source_trans_normals);
 
     }
 
@@ -700,7 +730,12 @@ int main(int argc,char** argv)
 
         loadfile1(tgt,argv[2]);
         loadfile1(src,argv[3]);
-
+        std::string s=argv[3];
+        int start=s.find_last_of('/');
+        int end=s.find_last_of('.');
+        std::string file=s.substr(start+1,end-start-1);
+        std::stringstream filename;
+        filename<<file<<"_transformed_ndt_omp.pcd";
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled(new pcl::PointCloud<pcl::PointXYZ>());
         
@@ -723,17 +758,19 @@ int main(int argc,char** argv)
 
         ndt_omp.setNumThreads(omp_get_max_threads());
         ndt_omp.setResolution(1.0);
-        ndt_omp.setNeighborhoodSearchMethod(pclomp::NeighborSearchMethod::KDTREE);
+        ndt_omp.setNeighborhoodSearchMethod(pclomp::NeighborSearchMethod::DIRECT1);
         ndt_omp.setTransformationEpsilon(0.01);
-        ndt_omp.setStepSize(0.1);
-        ndt_omp.setMaximumIterations(35);
+        ndt_omp.setStepSize(1);//default 0.1
+        ndt_omp.setMaximumIterations(100);//default 35
 
 
         Eigen::Matrix4f init_guess;
-        Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
-        Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
-        init_guess = (init_translation * init_rotation).matrix ();
+        // Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
+        // Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
+        // init_guess = (init_translation * init_rotation).matrix ();
+        init_guess = Eigen::Matrix4f::Identity();
 
+        
         clock_t starttime,endtime;
         starttime=clock();
 
@@ -750,7 +787,7 @@ int main(int argc,char** argv)
 
         pcl::transformPointCloud(*src,*output,ndt_omp.getFinalTransformation());
 
-        pcl::io::savePCDFileASCII("room_scan2_transformed_ndt_omp.pcd", *output);
+        pcl::io::savePCDFileASCII(filename.str(), *output);
 
     }
 
@@ -791,24 +828,43 @@ int main(int argc,char** argv)
 
     }
 
+     if(pcl::console::find_argument(argc,argv,"-i")>=0)
+    {
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+
+        pcl::io::loadPCDFile(argv[2],*cloud);
+
+        int point_number = cloud->points.size();
+        std::cerr<<"point number = "<<point_number<<std::endl;
+
+        std::set<float> intensity;
+        for(int i=0;i<point_number;++i)
+        intensity.insert(cloud->points[i].intensity);
+
+        cout<<intensity.size()<<endl;
+
+    }
+
     if(pcl::console::find_argument(argc,argv,"-t")>=0)
     {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr src(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::PointCloud<pcl::PointXYZ>::Ptr tgt(new pcl::PointCloud<pcl::PointXYZ>);
-
-        loadfile1(tgt,argv[2]);
-        loadfile2(src,argv[3]);
-
-        Eigen::Matrix4f init_guess;
-        Eigen::AngleAxisf init_rotation (0.6931, Eigen::Vector3f::UnitZ ());
-        Eigen::Translation3f init_translation (1.79387, 0.720047, 0);
-        init_guess = (init_translation * init_rotation).matrix ();
-
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr output(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::transformPointCloud(*src,*output,init_guess);
+
+        loadfile1(cloud,argv[2]);
+
+        Eigen::Matrix4f trans;
+        trans<< 0.333592 ,-0.941918,-0.0388056  ,-10.2338,
+                0.137894 ,0.0894748 ,-0.986397  ,-7.94611,
+                0.932578 ,0.323704  ,0.159733   ,-6.3033,
+                0        ,0         ,0          ,1;
+        trans<< 0.627894,-0.750407,-0.206491 ,-10.0237,
+                    0.741192 ,0.495585 ,0.452803 ,-7.56973,
+                    -0.237452,-0.437362  ,0.86737 ,-6.17818,
+                    0        ,0        ,0        ,1;
 
 
-        pcl::io::savePCDFileASCII("init_guess.pcd",*output);
+        pcl::transformPointCloud(*cloud,*output,trans);
+        pcl::io::savePCDFileASCII("test.pcd",*output);
 
     }
     return 0;

@@ -6,6 +6,7 @@
 #include<stdlib.h>
 #include<time.h>
 #include<ctime>
+#include<set>
 
 
 #include<pcl-1.7/pcl/point_types.h>
@@ -73,8 +74,8 @@ void printUsage(const char* command)
             <<" -gicp        Registration using icp(plane-to-plane)\n"
             <<" -icp2        Registration using icp(point-to-plane-2)\n"
             <<" -ndt_omp     Registration using NDT(multiple threads)\n"
+            << "-i           Intensity\n"
             << "-t           Test for pointcloud\n"
-            << "-i           Interaction Customization example\n"
             << "\n\n";
 }
 
@@ -665,6 +666,22 @@ int main(int argc,char** argv)
     }
 
 
+    if(pcl::console::find_argument(argc,argv,"-i")>=0)
+    {
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+
+        pcl::io::loadPCDFile(argv[2],*cloud);
+
+        int point_number = cloud->points.size();
+        std::cerr<<"point number = "<<point_number<<std::endl;
+
+        std::set<float> intensity;
+        for(int i=0;i<point_number;++i)
+        intensity.push_back(cloud->points.intensity);
+
+        cout<<intensity.size()<<endl;
+
+    }
 
 
 
